@@ -18,8 +18,8 @@
  */
 
 import { loadEnv, defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
+import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
 // https://vitejs.dev/config/
@@ -33,6 +33,7 @@ export default defineConfig(({ mode }) => {
           defineModel: true
         }
       }),
+      // https://github.com/vbenjs/vite-plugin-svg-icons
       createSvgIconsPlugin({
         iconDirs: [path.resolve(process.cwd(), 'src/assets/images/svg')],
         symbolId: 'icon-[dir]-[name]',
