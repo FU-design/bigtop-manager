@@ -34,3 +34,10 @@ $layout-sider-bg-color: #fff;
   justify-content: $justify;
   align-items: $align;
 }
+
+@mixin alt-card-body-padding($padding: $space-lg $space-md) {
+  :deep(.ant-card-body) {
+    padding: $padding !important;
+    overflow: auto;
+  }
+}

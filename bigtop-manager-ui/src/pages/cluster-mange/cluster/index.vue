@@ -17,12 +17,82 @@
   ~ under the License.
 -->
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+  import ContentTop from '@/components/common/content-top/index.vue'
+  import ContentBottom from '@/components/common/content-bottom/index.vue'
+  import type { TabsProps } from '@/components/common/content-bottom/index.vue'
+
+  const actions = [
+    {
+      key: 1,
+      label: '启动集群'
+    },
+    {
+      key: 2,
+      label: '重启集群'
+    },
+    {
+      key: 3,
+      label: '停止集群'
+    },
+    {
+      key: 4,
+      label: '删除集群'
+    }
+  ]
+
+  const tabsConfig: TabsProps[] = [
+    {
+      key: 1,
+      label: '概率'
+    },
+    {
+      key: 2,
+      label: '服务'
+    },
+    {
+      key: 3,
+      label: '主机'
+    },
+    {
+      key: 4,
+      label: '用户'
+    },
+    {
+      key: 5,
+      label: '作业'
+    }
+  ]
+
+  const onChange = (val: number | string) => {
+    console.log('val :>> ', val)
+  }
+</script>
 
 <template>
-  <div>
-    <a-card>{{ $route.params }}</a-card>
+  <div class="cluster">
+    <content-top>
+      <template #actions>
+        <a-button type="primary">添加服务</a-button>
+        <a-dropdown>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item v-for="{ key, label } in actions" :key="key">
+                {{ label }}
+              </a-menu-item>
+            </a-menu>
+          </template>
+          <a-button> 其他操作 </a-button>
+        </a-dropdown>
+      </template>
+    </content-top>
+    <content-bottom :tabs-config="tabsConfig" @on-change="onChange" />
   </div>
 </template>
 
-<style scoped></style>
+<style lang="scss" scoped>
+  .cluster {
+    @include flexbox($direction: column);
+    gap: $space-md;
+  }
+</style>

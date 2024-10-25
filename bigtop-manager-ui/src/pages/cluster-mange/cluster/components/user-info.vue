@@ -20,7 +20,7 @@
 <script setup lang="ts"></script>
 
 <template>
-  <div>detail </div>
+  <div>user-info </div>
 </template>
 
 <style scoped></style>
