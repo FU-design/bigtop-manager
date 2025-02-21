@@ -18,8 +18,10 @@
  */
 
 import routes from './routes'
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import { createRouterGuard } from './guard'
+import { getClusterList } from '@/api/cluster'
+import type { ClusterVO } from '@/api/cluster/types'
 
 const router = createRouter({
   routes,
@@ -27,5 +29,29 @@ const router = createRouter({
 })
 
 createRouterGuard(router)
+
+//  Add dynamic router
+const addDynamicRouterByCluster = async () => {
+  try {
+    const clusters = await getClusterList()
+    clusters.forEach((cluster: ClusterVO) => {
+      router.addRoute('Clusters', createDynamicRoutesByCluster(cluster))
+    })
+  } catch (error) {
+    console.error('Failed to load dynamic routes:', error)
+  }
+}
+
+// Create dynamic routes for cluster
+const createDynamicRoutesByCluster = (cluster: ClusterVO) => {
+  return {
+    name: `ClusterDetail-${cluster.id}`,
+    path: `${cluster.name}/:id`,
+    component: () => import('@/pages/cluster-manage/cluster/index.vue'),
+    meta: { title: cluster.name, hidden: true }
+  } as RouteRecordRaw
+}
+
+await addDynamicRouterByCluster()
 
 export default router

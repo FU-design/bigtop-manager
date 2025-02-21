@@ -48,14 +48,6 @@ const routes: RouteRecordRaw[] = [
         },
         children: [
           {
-            name: 'ClusterDetail',
-            path: RouteExceptions.DYNAMIC_ROUTE_MATCH,
-            component: () => import('@/pages/cluster-manage/cluster/index.vue'),
-            meta: {
-              hidden: true
-            }
-          },
-          {
             name: 'ClusterCreate',
             path: 'create',
             component: () => import('@/pages/cluster-manage/cluster/create.vue'),

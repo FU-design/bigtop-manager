@@ -27,9 +27,11 @@
   import { useMenuStore } from '@/store/menu/index'
   import { useStackStore } from '@/store/stack'
   import { storeToRefs } from 'pinia'
+  import { useMenuStoreTemp } from '@/store/menu/menuStore'
 
   const userStore = useUserStore()
   const menuStore = useMenuStore()
+  const menuStoreTemp = useMenuStoreTemp()
   // const clusterStore = useClusterStore()
   const stackStore = useStackStore()
   const { headerSelectedKey, headerMenus, siderMenuSelectedKey, siderMenus } = storeToRefs(menuStore)
@@ -37,6 +39,7 @@
   onMounted(async () => {
     userStore.getUserInfo()
     menuStore.setUpMenu()
+    menuStoreTemp.setUpMenu()
     stackStore.loadStacks()
   })
 </script>
