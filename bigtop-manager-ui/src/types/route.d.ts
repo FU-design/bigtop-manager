@@ -27,6 +27,7 @@ declare module 'vue-router' {
     alwaysShow?: boolean
     belong?: string
     noCache?: boolean
+    isDynamic?: boolean
     activeMenu?: string
   }
 }

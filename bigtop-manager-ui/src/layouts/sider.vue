@@ -18,27 +18,20 @@
 -->
 
 <script setup lang="ts">
-  import { toRefs, ref } from 'vue'
-  import { useRouter } from 'vue-router'
+  import { computed, ref } from 'vue'
+  import { storeToRefs } from 'pinia'
   import { RouteExceptions } from '@/enums'
-  import { useMenuStore } from '@/store/menu'
+  import { useRouter } from 'vue-router'
+  import { useMenuStoreTemp } from '@/store/menu/menuStore'
   import type { MenuItem } from '@/store/menu/types'
   import type { ClusterStatusType } from '@/api/cluster/types'
+  import type { MentionsProps } from 'ant-design-vue'
 
-  interface Props {
-    siderMenuSelectedKey: string
-    siderMenus: MenuItem[]
-  }
+  const menuStoreTemp = useMenuStoreTemp()
+  const { siderMenuSelectedKeys, siderMenus } = storeToRefs(menuStoreTemp)
+  const data = computed(() => router.getRoutes().filter((v) => v.meta.isDynamic))
 
-  const props = withDefaults(defineProps<Props>(), {
-    siderMenuSelectedKey: '',
-    siderMenus: () => []
-  })
-
-  const { siderMenuSelectedKey, siderMenus } = toRefs(props)
   const router = useRouter()
-  const menuStore = useMenuStore()
-  const emits = defineEmits(['onSiderClick'])
   const clusterStatus = ref<Record<ClusterStatusType, string>>({
     1: 'success',
     2: 'error',
@@ -47,10 +40,11 @@
 
   const toggleActivatedIcon = (menuItem: MenuItem) => {
     const { key, icon } = menuItem
-    if (menuStore.isDynamicRouteMatched) {
+    const selectedKey = siderMenuSelectedKeys.value ? siderMenuSelectedKeys.value[0] : ''
+    if (menuItem.isDynamic) {
       return key === RouteExceptions.SPECIAL_ROUTE_PATH ? `${icon}_activated` : icon
     } else {
-      return key === siderMenuSelectedKey.value ? `${icon}_activated` : icon
+      return key === selectedKey ? `${icon}_activated` : icon
     }
   }
 
@@ -58,14 +52,14 @@
     router.push({ name: 'ClusterCreate' })
   }
 
-  const onSiderClick = ({ key }: any) => {
-    emits('onSiderClick', key)
+  const onSiderClick: MentionsProps['onSelect'] = ({ key }) => {
+    menuStoreTemp.onSiderClick(key)
   }
 </script>
 
 <template>
   <a-layout-sider class="sider">
-    <a-menu :selected-keys="[siderMenuSelectedKey]" mode="inline" @select="onSiderClick">
+    <a-menu v-model:selected-keys="siderMenuSelectedKeys" mode="inline" @select="onSiderClick">
       <template v-for="menuItem in siderMenus" :key="menuItem.key">
         <a-sub-menu
           v-if="menuItem.children && menuItem.name === RouteExceptions.SPECIAL_ROUTE_NAME"
@@ -77,21 +71,21 @@
           <template #title>
             <span>{{ $t(menuItem.label) }}</span>
           </template>
-          <a-menu-item v-for="child in menuItem.children" :key="child.key">
-            <template #icon>
-              <div
-                style="height: 10px; margin-inline: 7px; display: flex; justify-content: center; align-items: flex-end"
-              >
-                <status-dot :size="8" :color="clusterStatus[child.status as ClusterStatusType] as any" />
+          <template v-for="child in data.map((v) => menuStoreTemp.generateMenuItemFromRoute(v))" :key="child.key">
+            <a-menu-item v-if="!child.hidden" :key="child.key">
+              <template #icon>
+                <div class="status-wrp">
+                  <status-dot :size="8" :color="clusterStatus[child.status as ClusterStatusType] as any" />
+                </div>
+              </template>
+              <div>
+                <span>{{ child.label }}</span>
               </div>
-            </template>
-            <div>
-              <span>{{ child.label }}</span>
-            </div>
-          </a-menu-item>
+            </a-menu-item>
+          </template>
         </a-sub-menu>
         <template v-else>
-          <a-menu-item :key="menuItem.key">
+          <a-menu-item v-if="!menuItem.hidden" :key="menuItem.key">
             <template #icon>
               <svg-icon style="height: 16px; width: 16px" :name="toggleActivatedIcon(menuItem)" />
             </template>
@@ -100,7 +94,7 @@
         </template>
       </template>
     </a-menu>
-    <div v-show="menuStore.isClusterCreateVisible">
+    <div v-show="menuStoreTemp?.isClusterCreateVisible">
       <a-divider />
       <div class="create-option">
         <a-button type="primary" ghost @click="addCluster">
@@ -120,6 +114,7 @@
     padding: 0 0 0 14px !important;
     margin: 4px 0 0 0 !important;
   }
+
   .sider {
     width: $layout-header-height;
     background: $layout-sider-bg-color;
@@ -135,6 +130,14 @@
 
     :deep(.ant-menu-item-selected) {
       border-right: 2px solid $color-primary;
+    }
+
+    .status-wrp {
+      height: 10px;
+      margin-inline: 7px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
     }
 
     .create-option {

@@ -19,7 +19,7 @@
 
 export enum RouteExceptions {
   DEFAULT_ROUTE_NAME = 'Default',
-  DYNAMIC_ROUTE_MATCH = ':cluster/:id',
+  DYNAMIC_ROUTE_MATCH = ':name/:id',
   SPECIAL_ROUTE_NAME = 'Clusters',
   SPECIAL_ROUTE_PATH = '/cluster-manage/clusters'
 }

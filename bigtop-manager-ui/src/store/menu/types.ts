@@ -22,6 +22,8 @@ export interface MenuItem {
   label: string
   title: string
   name?: string
+  hidden?: boolean
+  isDynamic?: boolean
   activeMenu?: string
   status?: number
   children?: MenuItem[]

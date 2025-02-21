@@ -54,6 +54,13 @@ const routes: RouteRecordRaw[] = [
             meta: {
               hidden: true
             }
+          },
+          {
+            path: '/cluster-manage/clusters/:name/:id',
+            name: 'ClusterDetail',
+            component: () => import('@/pages/cluster-manage/cluster/index.vue'),
+            props: true,
+            meta: { hidden: true }
           }
         ]
       },

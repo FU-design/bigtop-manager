@@ -26,7 +26,6 @@
   // import { useClusterStore } from '@/store/cluster'
   import { useMenuStore } from '@/store/menu/index'
   import { useStackStore } from '@/store/stack'
-  import { storeToRefs } from 'pinia'
   import { useMenuStoreTemp } from '@/store/menu/menuStore'
 
   const userStore = useUserStore()
@@ -34,31 +33,22 @@
   const menuStoreTemp = useMenuStoreTemp()
   // const clusterStore = useClusterStore()
   const stackStore = useStackStore()
-  const { headerSelectedKey, headerMenus, siderMenuSelectedKey, siderMenus } = storeToRefs(menuStore)
 
   onMounted(async () => {
+    menuStoreTemp.setUpMenu()
     userStore.getUserInfo()
     menuStore.setUpMenu()
-    menuStoreTemp.setUpMenu()
     stackStore.loadStacks()
   })
 </script>
 
 <template>
   <a-layout class="layout">
-    <layout-header
-      :header-selected-key="headerSelectedKey"
-      :header-menus="headerMenus"
-      @on-header-click="menuStore.onHeaderClick"
-    />
+    <layout-header />
     <a-layout>
-      <layout-sider
-        :sider-menu-selected-key="siderMenuSelectedKey"
-        :sider-menus="siderMenus"
-        @on-sider-click="menuStore.onSiderClick"
-      />
+      <layout-sider />
       <a-layout class="layout-inner">
-        <router-view />
+        <router-view :key="$route.fullPath" />
         <layout-footer />
       </a-layout>
     </a-layout>

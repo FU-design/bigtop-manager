@@ -35,23 +35,28 @@ const addDynamicRouterByCluster = async () => {
   try {
     const clusters = await getClusterList()
     clusters.forEach((cluster: ClusterVO) => {
-      router.addRoute('Clusters', createDynamicRoutesByCluster(cluster))
+      if (!router.hasRoute(`${cluster.name}-${cluster.id}`)) {
+        const dynamicRoute = createDynamicRoutesByCluster(cluster)
+        router.addRoute('Clusters', dynamicRoute)
+      }
     })
   } catch (error) {
     console.error('Failed to load dynamic routes:', error)
   }
 }
 
-// Create dynamic routes for cluster
+// Create dynamic routes for cluster management
 const createDynamicRoutesByCluster = (cluster: ClusterVO) => {
   return {
-    name: `ClusterDetail-${cluster.id}`,
-    path: `${cluster.name}/:id`,
+    name: `${cluster.name}-${cluster.id}`,
+    path: `/cluster-manage/clusters/${cluster.name}/${cluster.id}`,
     component: () => import('@/pages/cluster-manage/cluster/index.vue'),
-    meta: { title: cluster.name, hidden: true }
+    meta: { title: cluster.name, isDynamic: true },
+    props: true
   } as RouteRecordRaw
 }
 
 await addDynamicRouterByCluster()
 
+console.log('object :>> ', router.getRoutes())
 export default router
