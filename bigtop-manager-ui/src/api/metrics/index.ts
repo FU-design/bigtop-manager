@@ -17,28 +17,10 @@
  * under the License.
  */
 
-export interface AttrsVO {
-  type: string
-}
+import { get } from '@/api/request-util'
 
-export interface PropertyVO {
-  name: string
-  value: string
-  displayName: string
-  desc: string
-  attrs: AttrsVO
-}
+export type TimeRangeText = '1m' | '15m' | '30m' | '1h' | '3h' | '6h'
 
-export interface TypeConfigVO {
-  typeName: string
-  properties: PropertyVO[]
-}
-
-export interface ServiceConfigVO {
-  serviceName: string
-  configDesc: string
-  version: number
-  configs: TypeConfigVO[]
-  createTime: string
-  updateTime: string
+export const getClusterMetricsInfo = (paramsPath: { id: number }, params: { interval: TimeRangeText }) => {
+  return get(`/metrics/clusters/${paramsPath.id}`, params)
 }
