@@ -23,12 +23,14 @@ import { getService, getServiceList } from '@/api/service'
 import { useStackStore } from '@/store/stack'
 import type { ServiceListParams, ServiceVO } from '@/api/service/types'
 
+type ServiceMapType = ServiceVO & { clusterId: number }
+
 export const useServiceStore = defineStore(
   'service',
   () => {
     const stackStore = useStackStore()
     const services = ref<ServiceVO[]>([])
-    const serviceMap = ref<Record<string, (ServiceVO & { clusterId: number })[]>>({})
+    const serviceMap = ref<Record<string, ServiceMapType[]>>({})
     const total = ref(0)
     const loading = ref(false)
     const { stacks } = storeToRefs(stackStore)
