@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { notification, Progress, Avatar, Button, Modal } from 'ant-design-vue'
+import { Avatar, Button, Modal, notification, Progress } from 'ant-design-vue'
 import { computed, getCurrentInstance, h, reactive, shallowRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { defineStore } from 'pinia'
@@ -158,8 +158,7 @@ export const useJobProgress = defineStore('job-progress', () => {
 
   const getJobInstanceDetails = async (params: JobParams) => {
     try {
-      const data = await getJobDetails(params)
-      return data
+      return await getJobDetails(params)
     } catch (error) {
       console.log('error :>> ', error)
     }

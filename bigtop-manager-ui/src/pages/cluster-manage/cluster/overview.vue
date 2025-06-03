@@ -18,7 +18,7 @@
 -->
 
 <script setup lang="ts">
-  import { computed, onActivated, ref, shallowRef, useAttrs } from 'vue'
+  import { computed, onActivated, onMounted, ref, shallowRef, useAttrs, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { storeToRefs } from 'pinia'
   import { formatFromByte } from '@/utils/storage'
@@ -34,14 +34,10 @@
   import type { MenuItem } from '@/store/menu/types'
   import type { StackVO } from '@/api/stack/types'
   import type { Command } from '@/api/command/types'
-
-  type TimeRangeText = '1m' | '15m' | '30m' | '1h' | '6h' | '30h'
-  type TimeRangeItem = {
-    text: TimeRangeText
-    time: string
-  }
+  import { getClusterMetricsInfo, type TimeRangeText } from '@/api/metrics'
 
   const { t } = useI18n()
+  const loaded = ref(false)
   const attrs = useAttrs() as ClusterVO
   const jobProgressStore = useJobProgress()
   const serviceStore = useServiceStore()
@@ -57,42 +53,17 @@
     2: 'unhealthy',
     3: 'unknown'
   })
+  const timeRanges = shallowRef<TimeRangeText[]>(['1m', '15m', '30m', '1h', '3h', '6h'])
+  const formatFromByteKeys = shallowRef(['totalMemory', 'totalDisk'])
+  const clusterDetail = shallowRef<ClusterVO>({})
+
   const { locateStackWithService, serviceNames } = storeToRefs(serviceStore)
 
-  const clusterDetail = computed(() => ({
-    ...attrs,
-    totalMemory: formatFromByte(attrs.totalMemory as number),
-    totalDisk: formatFromByte(attrs.totalDisk as number)
-  }))
   const noChartData = computed(() => Object.values(chartData.value).every((v) => v.length === 0))
-  const timeRanges = computed((): TimeRangeItem[] => [
-    {
-      text: '1m',
-      time: ''
-    },
-    {
-      text: '15m',
-      time: ''
-    },
-    {
-      text: '30m',
-      time: ''
-    },
-    {
-      text: '1h',
-      time: ''
-    },
-    {
-      text: '6h',
-      time: ''
-    },
-    {
-      text: '30h',
-      time: ''
-    }
-  ])
-  const baseConfig = computed((): Partial<Record<keyof ClusterVO, string>> => {
-    return {
+  const detailKeys = computed(() => Object.keys(baseConfig.value) as (keyof ClusterVO)[])
+
+  const baseConfig = computed(
+    (): Partial<Record<keyof ClusterVO, string>> => ({
       status: t('overview.cluster_status'),
       displayName: t('overview.cluster_name'),
       desc: t('overview.cluster_desc'),
@@ -102,30 +73,22 @@
       totalProcessor: t('overview.core_count'),
       totalDisk: t('overview.disk_size'),
       createUser: t('overview.creator')
-    }
-  })
-  const unitOfBaseConfig = computed((): Partial<Record<keyof ClusterVO, string>> => {
-    return {
+    })
+  )
+
+  const serviceOperateMap = computed(() => ({
+    Start: t('common.start', [t('common.service')]),
+    Restart: t('common.restart', [t('common.service')]),
+    Stop: t('common.stop', [t('common.service')])
+  }))
+
+  const unitOfBaseConfig = computed(
+    (): Partial<Record<keyof ClusterVO, string>> => ({
       totalHost: t('overview.unit_host'),
       totalService: t('overview.unit_service'),
       totalProcessor: t('overview.unit_core')
-    }
-  })
-  const detailKeys = computed(() => Object.keys(baseConfig.value) as (keyof ClusterVO)[])
-  const serviceOperates = computed(() => [
-    {
-      action: 'Start',
-      text: t('common.start', [t('common.service')])
-    },
-    {
-      action: 'Restart',
-      text: t('common.restart', [t('common.service')])
-    },
-    {
-      action: 'Stop',
-      text: t('common.stop', [t('common.service')])
-    }
-  ])
+    })
+  )
 
   const handleServiceOperate = async (item: MenuItem, service: ServiceVO) => {
     try {
@@ -140,20 +103,45 @@
     }
   }
 
-  const handleTimeRange = (time: TimeRangeItem) => {
-    currTimeRange.value = time.text
+  const handleTimeRange = (time: TimeRangeText) => {
+    currTimeRange.value = time
+    getClusterMetrics()
   }
 
   const getServices = (filters?: ServiceListParams) => {
-    attrs.id != undefined && serviceStore.getServices(attrs.id, filters)
+    serviceStore.getServices(attrs.id!, filters)
   }
 
   const servicesFromCurrentCluster = (stack: StackVO) => {
     return stack.services.filter((v) => serviceNames.value.includes(v.name))
   }
 
+  const getClusterMetrics = async () => {
+    const data = await getClusterMetricsInfo({ id: attrs.id! }, { interval: currTimeRange.value })
+    console.log('data', data)
+  }
+
+  watch(
+    () => attrs.id,
+    (newId) => {
+      if (newId) {
+        clusterDetail.value = { ...attrs }
+        getClusterMetrics()
+        getServices()
+        loaded.value = true
+      }
+    },
+    { immediate: true }
+  )
+
   onActivated(() => {
-    getServices()
+    if (loaded.value && attrs.id) {
+      getClusterMetrics()
+    }
+  })
+
+  onMounted(() => {
+    loaded.value = false
   })
 </script>
 
@@ -193,6 +181,11 @@
                             $t(`common.${statusColors[clusterDetail[base] as ClusterStatusType]}`)
                           }}
                         </a-tag>
+                        <a-typography-text
+                          v-else-if="formatFromByteKeys.includes(base)"
+                          class="desc-sub-item-desc-column"
+                          :content="formatFromByte(clusterDetail[base] as number)"
+                        />
                         <a-typography-text
                           v-else
                           class="desc-sub-item-desc-column"
@@ -244,8 +237,8 @@
                 </a-button>
                 <template #overlay>
                   <a-menu @click="handleServiceOperate($event, service)">
-                    <a-menu-item v-for="operate in serviceOperates" :key="operate.action">
-                      <span>{{ operate.text }}</span>
+                    <a-menu-item v-for="[operate, text] of Object.entries(serviceOperateMap)" :key="operate">
+                      <span>{{ text }}</span>
                     </a-menu-item>
                   </a-menu>
                 </template>
@@ -260,13 +253,13 @@
           <a-space :size="12">
             <div
               v-for="time in timeRanges"
-              :key="time.text"
+              :key="time"
               tabindex="0"
               class="time-range"
-              :class="{ 'time-range-activated': currTimeRange === time.text }"
+              :class="{ 'time-range-activated': currTimeRange === time }"
               @click="handleTimeRange(time)"
             >
-              {{ time.text }}
+              {{ time }}
             </div>
           </a-space>
         </div>

@@ -30,10 +30,12 @@
   import Host from './host.vue'
   import User from './user.vue'
   import Job from '@/components/job/index.vue'
-  import type { Command } from '@/api/command/types'
+  import type { Command, CommandRequest } from '@/api/command/types'
   import type { TabItem } from '@/components/common/main-card/types'
   import type { GroupItem } from '@/components/common/button-group/types'
   import type { ClusterStatusType } from '@/api/cluster/types'
+
+  type StatusColorsType = Record<ClusterStatusType, keyof typeof CommonStatusTexts>
 
   const { t } = useI18n()
   const router = useRouter()
@@ -41,11 +43,17 @@
   const clusterStore = useClusterStore()
   const { currCluster, loading } = storeToRefs(clusterStore)
   const activeKey = ref('1')
-  const statusColors = shallowRef<Record<ClusterStatusType, keyof typeof CommonStatusTexts>>({
+  const commandRequestParams = ref<CommandRequest>({
+    command: 'Start',
+    clusterId: currCluster.value.id,
+    commandLevel: 'cluster'
+  })
+  const statusColors = shallowRef<StatusColorsType>({
     1: 'healthy',
     2: 'unhealthy',
     3: 'unknown'
   })
+  const getCompName = computed(() => [Overview, Service, Host, User, Job][Number(activeKey.value) - 1])
   const tabs = computed((): TabItem[] => [
     {
       key: '1',
@@ -73,7 +81,9 @@
       shape: 'default',
       type: 'primary',
       text: t('common.add', [t('common.service')]),
-      clickEvent: () => addService && addService()
+      clickEvent: () => {
+        router.push({ name: 'CreateService', params: { id: currCluster.value.id, creationMode: 'internal' } })
+      }
     },
     {
       shape: 'default',
@@ -97,31 +107,16 @@
     }
   ])
 
-  const getCompName = computed(() => {
-    const components = [Overview, Service, Host, User, Job]
-    return components[parseInt(activeKey.value) - 1]
-  })
-
   const dropdownMenuClick: GroupItem['dropdownMenuClickEvent'] = async ({ key }) => {
     try {
-      await jobProgressStore.processCommand(
-        {
-          command: key as keyof typeof Command,
-          clusterId: currCluster.value.id,
-          commandLevel: 'cluster'
-        },
-        async () => {
-          await clusterStore.loadClusters()
-          await clusterStore.getClusterDetail()
-        }
-      )
+      const params = { ...commandRequestParams.value, command: key as Command }
+      await jobProgressStore.processCommand(params, async () => {
+        await clusterStore.loadClusters()
+        await clusterStore.getClusterDetail()
+      })
     } catch (error) {
       console.log('error :>> ', error)
     }
-  }
-
-  const addService: GroupItem['clickEvent'] = () => {
-    router.push({ name: 'CreateService', params: { id: currCluster.value.id, creationMode: 'internal' } })
   }
 
   onMounted(() => {
