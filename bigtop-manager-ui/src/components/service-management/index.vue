@@ -44,7 +44,7 @@
   const { loading, serviceMap } = storeToRefs(serviceStore)
   const activeKey = ref('1')
   const serviceDetail = shallowRef<ServiceVO>()
-  const routeParams = computed(() => route.params as unknown as RouteParams)
+  const routeParams = computed(() => ({ ...route.params, id: route.params?.id ?? 0 }) as unknown as RouteParams)
   const tabs = computed((): TabItem[] => [
     {
       key: '1',

@@ -41,7 +41,7 @@ export interface ProcessResult {
 }
 
 export interface StepContext {
-  clusterId: number
+  clusterId?: number
   serviceId: number
   creationMode: 'internal' | 'public'
   type?: 'component'
@@ -113,7 +113,7 @@ export const useCreateServiceStore = defineStore(
     }
 
     function setStepContext(partial: StepContext) {
-      stepContext.value = partial
+      stepContext.value = { ...partial, clusterId: partial?.clusterId ?? 0 }
     }
 
     async function confirmServiceDependencyAction(type: 'add' | 'remove', preSelectedService: ExpandServiceVO) {
