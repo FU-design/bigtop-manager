@@ -25,54 +25,18 @@
   import CategoryChart from '@/pages/cluster-manage/cluster/components/category-chart.vue'
   import type { ServiceVO, ServiceStatusType } from '@/api/service/types'
 
-  type TimeRangeText = '1m' | '15m' | '30m' | '1h' | '6h' | '30h'
-  type TimeRangeItem = {
-    text: TimeRangeText
-    time: string
-  }
+  type TimeRangeType = '1m' | '15m' | '30m' | '1h' | '3h' | '6h'
 
   const { t } = useI18n()
   const attrs = useAttrs() as unknown as Required<ServiceVO> & { clusterId: number }
-  const currTimeRange = ref<TimeRangeText>('15m')
-  const chartData = ref({
-    chart1: [],
-    chart2: [],
-    chart3: [],
-    chart4: []
-  })
+  const currTimeRange = ref<TimeRangeType>('15m')
+  const timeRanges = shallowRef<TimeRangeType[]>(['1m', '15m', '30m', '1h', '3h', '6h'])
   const statusColors = shallowRef<Record<ServiceStatusType, keyof typeof CommonStatusTexts>>({
     1: 'healthy',
     2: 'unhealthy',
     3: 'unknown'
   })
   const serviceKeys = computed(() => Object.keys(baseConfig.value) as (keyof ServiceVO)[])
-  const noChartData = computed(() => Object.values(chartData.value).every((v) => v.length === 0))
-  const timeRanges = computed((): TimeRangeItem[] => [
-    {
-      text: '1m',
-      time: ''
-    },
-    {
-      text: '15m',
-      time: ''
-    },
-    {
-      text: '30m',
-      time: ''
-    },
-    {
-      text: '1h',
-      time: ''
-    },
-    {
-      text: '6h',
-      time: ''
-    },
-    {
-      text: '30h',
-      time: ''
-    }
-  ])
   const baseConfig = computed((): Partial<Record<keyof ServiceVO, string>> => {
     return {
       status: t('overview.service_status'),
@@ -85,8 +49,8 @@
     }
   })
 
-  const handleTimeRange = (time: TimeRangeItem) => {
-    currTimeRange.value = time.text
+  const handleTimeRange = (time: TimeRangeType) => {
+    currTimeRange.value = time
   }
 </script>
 
@@ -154,22 +118,17 @@
           <a-space :size="12">
             <div
               v-for="time in timeRanges"
-              :key="time.text"
+              :key="time"
               tabindex="0"
               class="time-range"
-              :class="{ 'time-range-activated': currTimeRange === time.text }"
+              :class="{ 'time-range-activated': currTimeRange === time }"
               @click="handleTimeRange(time)"
             >
-              {{ time.text }}
+              {{ time }}
             </div>
           </a-space>
         </div>
-        <template v-if="noChartData">
-          <div class="box-empty">
-            <a-empty />
-          </div>
-        </template>
-        <a-row v-else class="box-content">
+        <a-row class="box-content">
           <a-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
             <div class="chart-item-wrp">
               <gauge-chart chart-id="chart1" :title="$t('overview.memory_usage')" />

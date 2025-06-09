@@ -18,119 +18,93 @@
 -->
 
 <script setup lang="ts">
-  import { onBeforeUnmount, onMounted, shallowRef } from 'vue'
-  import * as echarts from 'echarts/core'
-  import { GaugeChart, GaugeSeriesOption } from 'echarts/charts'
-  import { CanvasRenderer } from 'echarts/renderers'
+  import { onMounted, shallowRef, toRefs, watchEffect } from 'vue'
+  import { type EChartsOption, useChart } from '@/composables/use-chart'
 
-  echarts.use([GaugeChart, CanvasRenderer])
-
-  type EChartsOption = echarts.ComposeOption<GaugeSeriesOption>
-
-  const props = defineProps<{
+  interface GaugeChartProps {
     chartId: string
     title: string
-  }>()
-
-  const myChart = shallowRef<echarts.ECharts | null>(null)
-
-  const initCharts = () => {
-    const chartDom = document.getElementById(`${props.chartId}`)
-    myChart.value = echarts.init(chartDom, null, {
-      devicePixelRatio: window.devicePixelRatio
-    })
-    const option: EChartsOption = {
-      series: [
-        {
-          type: 'gauge',
-          radius: '90%',
-          center: ['50%', '50%'],
-          axisLine: {
-            lineStyle: {
-              width: 14,
-              color: [
-                [0.3, '#67e0e3'],
-                [0.7, '#37a2da'],
-                [1, '#fd666d']
-              ]
-            }
-          },
-          pointer: {
-            itemStyle: {
-              color: 'auto'
-            }
-          },
-          axisTick: {
-            distance: -50,
-            length: 40,
-            lineStyle: {
-              color: '#fff',
-              width: 1
-            }
-          },
-          splitLine: {
-            distance: -28,
-            length: 28,
-            lineStyle: {
-              color: '#fff',
-              width: 4
-            }
-          },
-          axisLabel: {
-            color: 'inherit',
-            distance: 28,
-            fontSize: 14
-          },
-          detail: {
-            valueAnimation: true,
-            formatter: '{value} %',
-            color: 'inherit',
-            fontSize: 18
-          },
-          data: [
-            {
-              value: 80
-            }
-          ]
-        }
-      ]
-    }
-
-    myChart.value?.setOption<echarts.EChartsCoreOption>({
-      series: [
-        {
-          data: [
-            {
-              value: +(Math.random() * 100).toFixed(2)
-            }
-          ]
-        }
-      ]
-    })
-
-    option && myChart.value.setOption(option)
+    percent?: number
   }
 
-  const resizeChart = async () => {
-    setTimeout(() => {
-      myChart.value?.resize()
-    })
-  }
+  const props = withDefaults(defineProps<GaugeChartProps>(), { percent: 0 })
+  const { percent, chartId, title } = toRefs(props)
+  const { initChart, setOptions } = useChart()
 
-  onMounted(() => {
-    initCharts()
-    window.addEventListener('resize', resizeChart, true)
+  const option = shallowRef<EChartsOption>({
+    series: [
+      {
+        type: 'gauge',
+        radius: '92%',
+        center: ['50%', '50%'],
+        axisLine: {
+          lineStyle: {
+            width: 14,
+            color: [
+              [0.3, '#67e0e3'],
+              [0.7, '#37a2da'],
+              [1, '#fd666d']
+            ]
+          }
+        },
+        pointer: {
+          width: 3,
+          length: '58%',
+          itemStyle: {
+            color: 'auto'
+          }
+        },
+        axisTick: {
+          distance: -50,
+          length: 40,
+          lineStyle: {
+            color: '#fff',
+            width: 1
+          }
+        },
+        splitLine: {
+          distance: -28,
+          length: 28,
+          lineStyle: {
+            color: '#fff',
+            width: 4
+          }
+        },
+        axisLabel: {
+          color: 'inherit',
+          distance: 22,
+          fontSize: 12
+        },
+        detail: {
+          valueAnimation: true,
+          formatter: '{value}%',
+          color: 'inherit',
+          fontSize: 18
+        },
+        data: [
+          {
+            value: 0 * 100
+          }
+        ]
+      }
+    ]
   })
 
-  onBeforeUnmount(() => {
-    window.removeEventListener('resize', resizeChart, true)
+  watchEffect(() => {
+    setOptions({
+      series: [{ data: [{ value: percent.value.toFixed(2) }] }]
+    })
+  })
+
+  onMounted(() => {
+    initChart(document.getElementById(`${chartId.value}`)!, option.value)
   })
 </script>
 
 <template>
   <div class="chart">
-    <div class="chart-title">{{ $props.title }}</div>
-    <div :id="$props.chartId" style="height: 260px; width: 100%"></div>
+    <div class="chart-title">{{ title }}</div>
+    <div :id="chartId" style="height: 260px; width: 100%"></div>
   </div>
 </template>
 

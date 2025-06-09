@@ -29,39 +29,32 @@
   import { Empty } from 'ant-design-vue'
   import GaugeChart from './components/gauge-chart.vue'
   import CategoryChart from './components/category-chart.vue'
+  import { getClusterMetricsInfo, MetricsData, type TimeRangeType } from '@/api/metrics'
   import type { ClusterStatusType, ClusterVO } from '@/api/cluster/types'
   import type { ServiceListParams, ServiceVO } from '@/api/service/types'
   import type { MenuItem } from '@/store/menu/types'
   import type { StackVO } from '@/api/stack/types'
   import type { Command } from '@/api/command/types'
-  import { getClusterMetricsInfo, type TimeRangeText } from '@/api/metrics'
 
   const { t } = useI18n()
   const loaded = ref(false)
   const attrs = useAttrs() as ClusterVO
   const jobProgressStore = useJobProgress()
   const serviceStore = useServiceStore()
-  const currTimeRange = ref<TimeRangeText>('15m')
-  const chartData = ref({
-    chart1: [],
-    chart2: [],
-    chart3: [],
-    chart4: []
-  })
+  const currTimeRange = ref<TimeRangeType>('15m')
+  const chartData = ref<Partial<MetricsData>>({})
   const statusColors = shallowRef<Record<ClusterStatusType, keyof typeof CommonStatusTexts>>({
     1: 'healthy',
     2: 'unhealthy',
     3: 'unknown'
   })
-  const timeRanges = shallowRef<TimeRangeText[]>(['1m', '15m', '30m', '1h', '3h', '6h'])
+  const timeRanges = shallowRef<TimeRangeType[]>(['1m', '15m', '30m', '1h', '3h', '6h'])
   const formatFromByteKeys = shallowRef(['totalMemory', 'totalDisk'])
   const clusterDetail = shallowRef<ClusterVO>({})
 
   const { locateStackWithService, serviceNames } = storeToRefs(serviceStore)
 
-  const noChartData = computed(() => Object.values(chartData.value).every((v) => v.length === 0))
   const detailKeys = computed(() => Object.keys(baseConfig.value) as (keyof ClusterVO)[])
-
   const baseConfig = computed(
     (): Partial<Record<keyof ClusterVO, string>> => ({
       status: t('overview.cluster_status'),
@@ -103,7 +96,7 @@
     }
   }
 
-  const handleTimeRange = (time: TimeRangeText) => {
+  const handleTimeRange = (time: TimeRangeType) => {
     currTimeRange.value = time
     getClusterMetrics()
   }
@@ -117,8 +110,7 @@
   }
 
   const getClusterMetrics = async () => {
-    const data = await getClusterMetricsInfo({ id: attrs.id! }, { interval: currTimeRange.value })
-    console.log('data', data)
+    chartData.value = await getClusterMetricsInfo({ id: attrs.id! }, { interval: currTimeRange.value })
   }
 
   watch(
@@ -126,18 +118,15 @@
     (newId) => {
       if (newId) {
         clusterDetail.value = { ...attrs }
-        getClusterMetrics()
         getServices()
         loaded.value = true
       }
     },
-    { immediate: true }
+    { immediate: true, once: true }
   )
 
   onActivated(() => {
-    if (loaded.value && attrs.id) {
-      getClusterMetrics()
-    }
+    attrs.id && getClusterMetrics()
   })
 
   onMounted(() => {
@@ -263,30 +252,43 @@
             </div>
           </a-space>
         </div>
-        <template v-if="noChartData">
-          <div class="box-empty">
-            <a-empty />
-          </div>
-        </template>
-        <a-row v-else class="box-content">
+        <a-row class="box-content">
           <a-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
             <div class="chart-item-wrp">
-              <gauge-chart chart-id="chart1" :title="$t('overview.memory_usage')" />
+              <gauge-chart
+                chart-id="chart1"
+                :percent="Number(chartData.cpuUsageCur)"
+                :title="$t('overview.memory_usage')"
+              />
             </div>
           </a-col>
           <a-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
             <div class="chart-item-wrp">
-              <gauge-chart chart-id="chart2" :title="$t('overview.cpu_usage')" />
+              <gauge-chart
+                chart-id="chart2"
+                :percent="Number(chartData.memoryUsageCur)"
+                :title="$t('overview.cpu_usage')"
+              />
             </div>
           </a-col>
           <a-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
             <div class="chart-item-wrp">
-              <category-chart chart-id="chart4" :title="$t('overview.cpu_usage')" />
+              <category-chart
+                chart-id="chart4"
+                :time-distance="currTimeRange"
+                :data="chartData.cpuUsage"
+                :title="$t('overview.cpu_usage')"
+              />
             </div>
           </a-col>
           <a-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
             <div class="chart-item-wrp">
-              <category-chart chart-id="chart3" :title="$t('overview.memory_usage')" />
+              <category-chart
+                chart-id="chart3"
+                :time-distance="currTimeRange"
+                :data="chartData.memoryUsage"
+                :title="$t('overview.memory_usage')"
+              />
             </div>
           </a-col>
         </a-row>

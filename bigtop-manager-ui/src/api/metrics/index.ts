@@ -19,8 +19,18 @@
 
 import { get } from '@/api/request-util'
 
-export type TimeRangeText = '1m' | '15m' | '30m' | '1h' | '3h' | '6h'
+export type TimeRangeType = '1m' | '15m' | '30m' | '1h' | '3h' | '6h'
 
-export const getClusterMetricsInfo = (paramsPath: { id: number }, params: { interval: TimeRangeText }) => {
-  return get(`/metrics/clusters/${paramsPath.id}`, params)
+export type MetricsData = {
+  cpuUsageCur: string
+  memoryUsageCur: string
+  cpuUsage: string[]
+  memoryUsage: string[]
+  systemLoad1: string[]
+  systemLoad2: string[]
+  systemLoad3: string[]
+}
+
+export const getClusterMetricsInfo = (paramsPath: { id: number }, params: { interval: TimeRangeType }) => {
+  return get<MetricsData>(`/metrics/clusters/${paramsPath.id}`, params)
 }

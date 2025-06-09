@@ -26,5 +26,6 @@ declare module 'vue' {
     ButtonGroup: (typeof import('@/components/common/button-group/index.vue'))['default']
     MarkdownView: (typeof import('@/components/common/markdown-view/index.vue'))['default']
     StatusDot: (typeof import('@/components/common/status-dot/index.vue'))['default']
+    Empty: (typeof import('@/components/common/empty/index.vue'))['default']
   }
 }

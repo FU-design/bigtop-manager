@@ -23,7 +23,7 @@
   import { useClusterStore } from '@/store/cluster'
   import { storeToRefs } from 'pinia'
   import { CommonStatus, CommonStatusTexts } from '@/enums/state'
-  import { useRouter } from 'vue-router'
+  import { useRoute, useRouter } from 'vue-router'
   import { useJobProgress } from '@/store/job-progress'
   import Overview from './overview.vue'
   import Service from './service.vue'
@@ -38,14 +38,15 @@
   type StatusColorsType = Record<ClusterStatusType, keyof typeof CommonStatusTexts>
 
   const { t } = useI18n()
+  const route = useRoute()
   const router = useRouter()
   const jobProgressStore = useJobProgress()
   const clusterStore = useClusterStore()
-  const { currCluster, loading } = storeToRefs(clusterStore)
+  const { clusterMap, loading } = storeToRefs(clusterStore)
   const activeKey = ref('1')
   const commandRequestParams = ref<CommandRequest>({
     command: 'Start',
-    clusterId: currCluster.value.id,
+    clusterId: 0,
     commandLevel: 'cluster'
   })
   const statusColors = shallowRef<StatusColorsType>({
@@ -53,6 +54,7 @@
     2: 'unhealthy',
     3: 'unknown'
   })
+  const currCluster = computed(() => clusterMap.value[`${route.params.id}`])
   const getCompName = computed(() => [Overview, Service, Host, User, Job][Number(activeKey.value) - 1])
   const tabs = computed((): TabItem[] => [
     {
@@ -109,7 +111,7 @@
 
   const dropdownMenuClick: GroupItem['dropdownMenuClickEvent'] = async ({ key }) => {
     try {
-      const params = { ...commandRequestParams.value, command: key as Command }
+      const params = { ...commandRequestParams.value, command: key as Command, clusterId: currCluster.value.id }
       await jobProgressStore.processCommand(params, async () => {
         await clusterStore.loadClusters()
         await clusterStore.getClusterDetail()
