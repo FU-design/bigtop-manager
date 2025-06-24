@@ -23,7 +23,7 @@
   import { useClusterStore } from '@/store/cluster'
   import { storeToRefs } from 'pinia'
   import { CommonStatus, CommonStatusTexts } from '@/enums/state'
-  import { useRoute, useRouter } from 'vue-router'
+  import { useRouter } from 'vue-router'
   import { useJobProgress } from '@/store/job-progress'
   import Overview from './overview.vue'
   import Service from './service.vue'
@@ -38,11 +38,10 @@
   type StatusColorsType = Record<ClusterStatusType, keyof typeof CommonStatusTexts>
 
   const { t } = useI18n()
-  const route = useRoute()
   const router = useRouter()
   const jobProgressStore = useJobProgress()
   const clusterStore = useClusterStore()
-  const { clusterMap, loading } = storeToRefs(clusterStore)
+  const { currCluster, loading } = storeToRefs(clusterStore)
   const activeKey = ref('1')
   const commandRequestParams = ref<CommandRequest>({
     command: 'Start',
@@ -54,7 +53,7 @@
     2: 'unhealthy',
     3: 'unknown'
   })
-  const currCluster = computed(() => clusterMap.value[`${route.params.id}`])
+  // const currCluster = computed(() => clusterMap.value[`${route.params.id}`])
   const getCompName = computed(() => [Overview, Service, Host, User, Job][Number(activeKey.value) - 1])
   const tabs = computed((): TabItem[] => [
     {

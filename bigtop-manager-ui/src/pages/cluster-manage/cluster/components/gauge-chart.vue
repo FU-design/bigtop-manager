@@ -92,12 +92,12 @@
 
   watchEffect(() => {
     setOptions({
-      series: [{ data: [{ value: percent.value.toFixed(2) }] }]
+      series: [{ data: [{ value: percent.value.toFixed(2) === 'NaN' ? 0 : percent.value.toFixed(2) }] }]
     })
   })
 
   onMounted(() => {
-    initChart(document.getElementById(`${chartId.value}`)!, option.value)
+    document.getElementById(`${chartId.value}`) && initChart(document.getElementById(`${chartId.value}`)!, option.value)
   })
 </script>
 

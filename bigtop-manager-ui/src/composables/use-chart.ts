@@ -44,6 +44,9 @@ export const useChart = () => {
   const opts = shallowRef({ devicePixelRatio: window.devicePixelRatio })
 
   const initChart = (selector: HTMLElement, option: EChartsOption) => {
+    if (!selector) {
+      return
+    }
     chartsRef.value && chartsRef.value.dispose()
     chartsRef.value = echarts.init(selector, null, opts.value)
     chartsRef.value?.setOption(option)

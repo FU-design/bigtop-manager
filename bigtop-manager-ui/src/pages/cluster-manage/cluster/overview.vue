@@ -54,7 +54,6 @@
 
   const { locateStackWithService, serviceNames } = storeToRefs(serviceStore)
 
-  const detailKeys = computed(() => Object.keys(baseConfig.value) as (keyof ClusterVO)[])
   const baseConfig = computed(
     (): Partial<Record<keyof ClusterVO, string>> => ({
       status: t('overview.cluster_status'),
@@ -68,6 +67,8 @@
       createUser: t('overview.creator')
     })
   )
+
+  const detailKeys = computed(() => Object.keys(baseConfig.value) as (keyof ClusterVO)[])
 
   const serviceOperateMap = computed(() => ({
     Start: t('common.start', [t('common.service')]),

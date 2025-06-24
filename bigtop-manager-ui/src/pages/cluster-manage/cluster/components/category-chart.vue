@@ -97,18 +97,6 @@
     })
   )
 
-  watchEffect(() => {
-    setOptions({
-      xAxis: [{ data: getTimePoints(timeDistance.value) || [] }]
-    })
-  })
-
-  watchEffect(() => {
-    setOptions({
-      series: [{ data: [{ value: data.value ?? [] }] }]
-    })
-  })
-
   const intervalToMs = (interval: string): number => {
     const unit = interval.replace(/\d+/g, '')
     const value = parseInt(interval)
@@ -138,7 +126,19 @@
 
   onMounted(() => {
     const selector = document.getElementById(`${chartId.value}`)
-    initChart(selector!, option.value)
+    selector && initChart(selector!, option.value)
+  })
+
+  watchEffect(() => {
+    setOptions({
+      xAxis: [{ data: getTimePoints(timeDistance.value) || [] }]
+    })
+  })
+
+  watchEffect(() => {
+    setOptions({
+      series: [{ data: [{ value: data.value ?? [] }] }]
+    })
   })
 </script>
 
