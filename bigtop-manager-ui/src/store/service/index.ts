@@ -17,10 +17,9 @@
  * under the License.
  */
 
-import { defineStore, storeToRefs } from 'pinia'
+import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { getService, getServiceList } from '@/api/service'
-import { useStackStore } from '@/store/stack'
 import type { ServiceListParams, ServiceVO } from '@/api/service/types'
 
 type ServiceMapType = ServiceVO & { clusterId: number }
@@ -28,19 +27,11 @@ type ServiceMapType = ServiceVO & { clusterId: number }
 export const useServiceStore = defineStore(
   'service',
   () => {
-    const stackStore = useStackStore()
     const services = ref<ServiceVO[]>([])
     const serviceMap = ref<Record<string, ServiceMapType[]>>({})
     const total = ref(0)
     const loading = ref(false)
-    const { stacks } = storeToRefs(stackStore)
     const serviceNames = computed(() => services.value.map((v) => v.name))
-    const locateStackWithService = computed(() => {
-      return stacks.value.filter((item) =>
-        item.services.some((service) => service.name && serviceNames.value.includes(service.name))
-      )
-    })
-
     const serviceFlatMap = computed(() => {
       const result: Record<string, ServiceVO> = {}
 
@@ -104,7 +95,6 @@ export const useServiceStore = defineStore(
       services,
       loading,
       serviceNames,
-      locateStackWithService,
       serviceFlatMap,
       getServices,
       getServiceDetail,

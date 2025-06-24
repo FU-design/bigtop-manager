@@ -18,7 +18,7 @@
 -->
 
 <script setup lang="ts">
-  import { computed, onActivated, onMounted, ref, shallowRef, useAttrs, watch } from 'vue'
+  import { computed, onActivated, ref, shallowRef, useAttrs, watch, watchEffect } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { storeToRefs } from 'pinia'
   import { formatFromByte } from '@/utils/storage'
@@ -26,10 +26,11 @@
   import { CommonStatus, CommonStatusTexts } from '@/enums/state'
   import { useServiceStore } from '@/store/service'
   import { useJobProgress } from '@/store/job-progress'
+  import { useStackStore } from '@/store/stack'
   import { Empty } from 'ant-design-vue'
+
   import GaugeChart from './components/gauge-chart.vue'
   import CategoryChart from './components/category-chart.vue'
-  import { getClusterMetricsInfo, MetricsData, type TimeRangeType } from '@/api/metrics'
   import type { ClusterStatusType, ClusterVO } from '@/api/cluster/types'
   import type { ServiceListParams, ServiceVO } from '@/api/service/types'
   import type { MenuItem } from '@/store/menu/types'
@@ -40,6 +41,7 @@
   const loaded = ref(false)
   const attrs = useAttrs() as ClusterVO
   const jobProgressStore = useJobProgress()
+  const stackStore = useStackStore()
   const serviceStore = useServiceStore()
   const currTimeRange = ref<TimeRangeType>('15m')
   const chartData = ref<Partial<MetricsData>>({})
@@ -48,11 +50,8 @@
     2: 'unhealthy',
     3: 'unknown'
   })
-  const timeRanges = shallowRef<TimeRangeType[]>(['1m', '15m', '30m', '1h', '3h', '6h'])
-  const formatFromByteKeys = shallowRef(['totalMemory', 'totalDisk'])
-  const clusterDetail = shallowRef<ClusterVO>({})
-
-  const { locateStackWithService, serviceNames } = storeToRefs(serviceStore)
+  const { serviceNames } = storeToRefs(serviceStore)
+  const locateStackWithService = shallowRef<StackVO[]>([])
 
   const baseConfig = computed(
     (): Partial<Record<keyof ClusterVO, string>> => ({
@@ -133,6 +132,20 @@
   onMounted(() => {
     loaded.value = false
   })
+
+  watchEffect(() => {
+    locateStackWithService.value = stackStore.stacks.filter((item) =>
+      item.services.some((service) => service.name && serviceNames.value.includes(service.name))
+    )
+  })
+
+  watch(
+    () => attrs,
+    () => {
+      getServices()
+    },
+    { immediate: true, deep: true }
+  )
 </script>
 
 <template>
