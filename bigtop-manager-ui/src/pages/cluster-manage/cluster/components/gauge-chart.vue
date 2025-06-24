@@ -97,7 +97,8 @@
   })
 
   onMounted(() => {
-    document.getElementById(`${chartId.value}`) && initChart(document.getElementById(`${chartId.value}`)!, option.value)
+    const selector = document.getElementById(`${chartId.value}`)
+    selector && initChart(document.getElementById(`${chartId.value}`)!, option.value)
   })
 </script>
 

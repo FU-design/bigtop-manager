@@ -18,7 +18,7 @@
 -->
 
 <script setup lang="ts">
-  import { computed, onActivated, ref, shallowRef, useAttrs, watch, watchEffect } from 'vue'
+  import { computed, onActivated, ref, shallowRef, useAttrs, watch, watchEffect, onMounted } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { storeToRefs } from 'pinia'
   import { formatFromByte } from '@/utils/storage'
